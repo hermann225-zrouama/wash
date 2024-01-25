@@ -85,6 +85,21 @@ pressingController.getPressing = async (req, res) => {
     }
 }
 
+pressingController.getPressingInfoById = async (pressingId) => {
+    try{
+        const existingPressing = await pressing.findOne({ where: { id: pressingId } });
+        if (!existingPressing) {
+            return res.status(400).json({ message: 'Pressing does not exist' });
+        }
+
+        return existingPressing.dataValues;
+
+    }catch(err){
+        console.log(err);
+        return res.status(500).json({ message: err });
+    }
+}
+
 pressingController.logoutPressing = async (req, res) => {
     try{
         req.session.destroy(function(err) {
@@ -114,8 +129,11 @@ pressingController.getPressingCoordinates = async () => {
         return pressingsCoordinates;
 
     }catch(err){
+        console.log("get coordinates error");
         console.log(err);
     }
 }
+
+
 
 module.exports = pressingController;

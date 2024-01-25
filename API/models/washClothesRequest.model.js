@@ -15,7 +15,7 @@ const washClothesRequest = sq.define('washClothesRequest', {
     status: {
         type: DataTypes.STRING,
         allowNull: false,
-        defaultValue: "pending"
+        defaultValue: "PENDING"
     },
     price: {
         type: DataTypes.STRING,

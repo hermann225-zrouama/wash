@@ -1,5 +1,5 @@
 const washClothesRequestModel = require('../models/washClothesRequest.model');
-const DetermineBestPressingForWashClotheRequest = require('../core/calcDistance.js');
+const coreAlgo = require('../core/coreAlgo.js');
 const tarification = require('../core/tarification.js');
 
 // create controller
@@ -10,15 +10,14 @@ washClothesRequestController.createWashClothesRequest = async (req, res) => {
         const { clientId, clientLat, clientLong, } = req.body;
 
         const clothesRequestItems = {
-            "T-shirt": 2,
-            "Pantalon": 2,
-            "Chemise": 25,
-            "Veste": 5,
-            "Autre":3 
+            "TSHIRT": 2,
+            "PANTALON": 2,
+            "CHEMISE": 25,
+            "VESTE": 5,
         }
 
         let clientCoordonate = { lat: clientLat, long: clientLong };
-        let bestPressing = await DetermineBestPressingForWashClotheRequest(clientCoordonate);
+        let bestPressing = await coreAlgo.determineBestPressingForWashClothesRequest(clientCoordonate);
         let price = tarification(clothesRequestItems);
 
         const newWashClothesRequest = new washClothesRequestModel({
@@ -39,5 +38,6 @@ washClothesRequestController.createWashClothesRequest = async (req, res) => {
         return res.status(500).json({ message: err });
     }
 }
+
 
 module.exports = washClothesRequestController;
