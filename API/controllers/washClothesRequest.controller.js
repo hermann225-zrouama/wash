@@ -20,7 +20,6 @@ washClothesRequestController.createWashClothesRequest = async (req, res) => {
         let bestPressing = await coreAlgo.determineBestPressingForWashClothesRequest(clientCoordonate);
 
         if(!bestPressing){
-            console.log("Aucun pressing disponible");
             return res.status(400).json({ message: 'Aucun pressing disponible' });
         }
 
@@ -28,7 +27,7 @@ washClothesRequestController.createWashClothesRequest = async (req, res) => {
 
         const newWashClothesRequest = new washClothesRequestModel({
             date: new Date(),
-            status: "pending",
+            status: "PENDING",
             washClothesRequestItems: clothesRequestItems,
             price,
             pressingId: bestPressing.id,
