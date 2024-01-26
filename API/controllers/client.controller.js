@@ -5,6 +5,17 @@ const bcrypt = require("bcrypt")
 const clientController = {};
 const saltRounds = 10
 
+/**
+ * Create new client
+ * @param {string} firstName
+ * @param {string} lastName
+ * @param {string} email
+ * @param {string} phoneNumber
+ * @param {string} password
+ * @returns {object} client
+ * @throws {Error} error
+ */
+
 clientController.createClient = async (req, res) => {
     try{
         const { firstName, lastName, email, phoneNumber,password } = req.body;
@@ -39,6 +50,13 @@ clientController.createClient = async (req, res) => {
     }
 }
 
+/**
+ * Authenticate client
+ * @param {string} phoneNumber
+ * @param {string} password
+ * @returns {object} client
+ * @throws {Error} error
+ */
 clientController.authenticateClient = async (req, res) => {
     try{
         if (req.session.user) {
@@ -72,6 +90,11 @@ clientController.authenticateClient = async (req, res) => {
         return res.status(500).json({ message: err });
     }
 }
+
+/**
+ * Kill client session
+ * @returns {object} message
+ */
 
 clientController.logoutClient = async (req, res) => {
     try{

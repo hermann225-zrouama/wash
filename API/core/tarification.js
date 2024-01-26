@@ -6,6 +6,7 @@ let clothesCategoryBindingPrices = {
     "DRAP": 0
 }
 
+
 const tarification = (clothesRequestItems)=>{
     let total = 0;
     for (const [key, value] of Object.entries(clothesRequestItems)) {

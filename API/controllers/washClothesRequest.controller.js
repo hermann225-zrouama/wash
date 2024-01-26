@@ -5,29 +5,40 @@ const tarification = require('../core/tarification.js');
 // create controller
 const washClothesRequestController = {};
 
+/**
+ * Create a new wash clothes request
+ * @param {string} clientId
+ * @param {string} clientLat
+ * @param {string} clientLong
+ * @param {string} tshirt
+ * @param {string} pantalon
+ * @param {string} chemise
+ * @param {string} veste
+ * @returns {object} washClothesRequest
+ * @throws {Error} error
+ */
 washClothesRequestController.createWashClothesRequest = async (req, res) => {
     try{
-        const { clientId, clientLat, clientLong, } = req.body;
+        const { clientId, clientLat, clientLong,tshirt,pantalon,chemise,veste } = req.body;
 
         const clothesRequestItems = {
-            "TSHIRT": 2,
-            "PANTALON": 2,
-            "CHEMISE": 25,
-            "VESTE": 5,
+            "TSHIRT": tshirt,
+            "PANTALON": pantalon,
+            "CHEMISE": chemise,
+            "VESTE": veste,
         }
 
-        let clientCoordonate = { lat: clientLat, long: clientLong };
-        let bestPressing = await coreAlgo.determineBestPressingForWashClothesRequest(clientCoordonate);
+        const clientCoordonate = { lat: clientLat, long: clientLong };
+        const bestPressing = await coreAlgo.determineBestPressingForWashClothesRequest(clientCoordonate);
 
         if(!bestPressing){
             return res.status(400).json({ message: 'Aucun pressing disponible' });
         }
 
-        let price = tarification(clothesRequestItems);
+        const price = tarification(clothesRequestItems);
 
         const newWashClothesRequest = new washClothesRequestModel({
             date: new Date(),
-            status: "PENDING",
             washClothesRequestItems: clothesRequestItems,
             price,
             pressingId: bestPressing.id,

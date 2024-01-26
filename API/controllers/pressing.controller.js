@@ -5,6 +5,17 @@ const bcrypt = require("bcrypt")
 const pressingController = {};
 const saltRounds = 10
 
+/**
+ * Create new pressing
+ * @param {string} name
+ * @param {string} lat
+ * @param {string} long
+ * @param {string} phoneNumber
+ * @param {string} password
+ * @param {string} address
+ * @returns {object} pressing
+ * @throws {Error} error
+ */
 pressingController.createPressing = async (req, res) => {
     try{
         const { name, lat, long, phoneNumber,password, address } = req.body;
@@ -36,6 +47,13 @@ pressingController.createPressing = async (req, res) => {
     }
 }
 
+/**
+ * Authenticate pressing
+ * @param {string} phoneNumber
+ * @param {string} password
+ * @returns {object} pressing
+ * @throws {Error} error
+ */
 pressingController.authenticatePressing = async (req, res) => {
     try{
         if (req.session.user) {
@@ -66,6 +84,12 @@ pressingController.authenticatePressing = async (req, res) => {
     }
 }
 
+/**
+ * Get pressing by id
+ * @param {string} id
+ * @returns {object} pressing
+ * @throws {Error} error
+ */
 pressingController.getPressing = async (req, res) => {
     try{
         const { id } = req.params;
@@ -85,6 +109,11 @@ pressingController.getPressing = async (req, res) => {
     }
 }
 
+/**
+ * Get information of pressing by id
+ * @returns {String} pressing's id
+ * @throws {Error} error
+ */
 pressingController.getPressingInfoById = async (pressingId) => {
     try{
         const existingPressing = await pressing.findOne({ where: { id: pressingId } });
@@ -100,6 +129,11 @@ pressingController.getPressingInfoById = async (pressingId) => {
     }
 }
 
+/**
+ * Kill pressing session
+ * @returns {object} message
+ * @throws {Error} error
+ */
 pressingController.logoutPressing = async (req, res) => {
     try{
         req.session.destroy(function(err) {
@@ -114,6 +148,11 @@ pressingController.logoutPressing = async (req, res) => {
     }
 }
 
+/**
+ * Get coordinates of all pressings
+ * @returns {Array} pressingsCoordinates
+ * @throws {Error} error
+ */
 pressingController.getPressingCoordinates = async () => {
     try{
         const pressings = await pressing.findAll();

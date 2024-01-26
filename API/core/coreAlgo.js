@@ -4,24 +4,36 @@ const WASHING_TIME_IN_MINUTES = 60 || process.env.WASHING_TIME_IN_MINUTES;
 const CUSTOMER_WASH_DELIVERY_TIME_IN_MINUTES = 60 * 48 || process.env.CUSTOMER_WASH_DELIVERY_TIME_IN_MINUTES;
 const washClothesRequestModel = require('../models/washClothesRequest.model');
 
-
-const getRequestPerPressing = async (pressingId) => {
-    try {
-        const request = await washClothesRequestModel.count({ where: { id: pressingId, status: "PENDING" } });
-        return request;
-    } catch (err) {
-        console.log(err);
-    }
-}
+/**
+ * Récupère le nombre de demandes en attente pour chaque pressing dans un tableau de pressings.
+ *
+ * @param {Array} pressingAroundClient - Tableau d'objets représentant les pressings.
+ * @return {Promise<Array>} Une promesse résolue avec un tableau d'objets contenant l'ID du pressing et le nombre de demandes en attente.
+ */
 
 const retrieveRequestPerPressing = async (pressingAroundClient) => {
-    const result = await Promise.all(pressingAroundClient.map(async pressing => {
-        const request = await getRequestPerPressing(pressing.id);
-        return { pressingId: pressing.id, requestcount: request };
-    }));
-    return result;
-}
+    try {
+        const result = await Promise.all(pressingAroundClient.map(async pressing => {
+            const requestCount = await washClothesRequestModel.count({
+                where: { id: pressing.id, status: "PENDING" }
+            });
 
+            return { pressingId: pressing.id, requestCount };
+        }));
+
+        return result;
+    } catch (err) {
+        console.error(err);
+        throw new Error("Failed to retrieve request counts per pressing.");
+    }
+};
+
+
+/**
+ * Détermine le pressing le plus proche du client.
+ * @param {Array} requestPerPressing - Tableau d'objets contenant l'ID du pressing et le nombre de demandes en attente.
+ * @return {Promise<Object>} Une promesse résolue avec un objet contenant les informations du pressing le plus proche du client.
+ */
 
 const determineBestPressing = async (requestPerPressing) => {
     const result = [];
@@ -35,6 +47,15 @@ const determineBestPressing = async (requestPerPressing) => {
     return result;
 }
 
+
+/**
+ * Calcule la distance entre deux coordonnées géographiques.
+ * @param {Object} clientCoordinate - Objet contenant les coordonnées géographiques du client.
+ * @param {Object} pressingCoordinate - Objet contenant les coordonnées géographiques du pressing.
+ * @return {Number} La distance entre les deux coordonnées géographiques.
+ * @see https://www.movable-type.co.uk/scripts/latlong.html
+ * @see https://en.wikipedia.org/wiki/Haversine_formula
+ */
 
 const calcDistance = (clientCoordinate, pressingCoordinate) => {
     const R = 6371e3; // metres
@@ -55,13 +76,20 @@ const calcDistance = (clientCoordinate, pressingCoordinate) => {
     return distance;
 }
 
-const returnClosePressing = async (clientCoordinate, pressingList) => {
-    const pressingsAroundClient = pressingList.filter(pressing => {
-        const distance = calcDistance(clientCoordinate, { lat: pressing.lat, long: pressing.long });
-        return distance <= RADIUS_IN_KM;
-    });
-    return pressingsAroundClient;
-}
+// const returnClosePressing = async (clientCoordinate, pressingList) => {
+//     const pressingsAroundClient = pressingList.filter(pressing => {
+//         const distance = calcDistance(clientCoordinate, { lat: pressing.lat, long: pressing.long });
+//         return distance <= RADIUS_IN_KM;
+//     });
+//     return pressingsAroundClient;
+// }
+
+/**
+ * Récupère les coordonnées géographiques des pressings dans un rayon de recherche.
+ * @param {Object} clientCoordinate - Objet contenant les coordonnées géographiques du client.
+ * @param {Number} radiusInKm - Rayon de recherche en kilomètres.
+ * @return {Promise<Array>} Une promesse résolue avec un tableau d'objets contenant les coordonnées géographiques des pressings.
+ */
 
 const getPressingAroundClient = async (clientCoordinate, radiusInKm) => {
     try {
@@ -72,19 +100,25 @@ const getPressingAroundClient = async (clientCoordinate, radiusInKm) => {
             console.log("distance", distance);
             return distance <= radiusInKm;
         });
-        
+
         // si aucun pressing n'est trouvé dans le rayon de recherche augmenter le rayon de recherche
         if (closePressing.length === 0) {
             return getPressingAroundClient(clientCoordinate, radiusInKm + 1);
         } else {
             return closePressing;
         }
-        
+
     } catch (err) {
         console.error(err); // Utilisation de console.error pour les erreurs
     }
 };
 
+
+/**
+ * Détermine le pressing optimal pour la requête du client.
+ * @param {Object} clientCoordinate - Objet contenant les coordonnées géographiques du client.
+ * @return {Promise<Object>} Une promesse résolue avec un objet contenant les informations du pressing le plus proche du client.
+ */
 
 const determineBestPressingForWashClothesRequest = async (clientCoordinate) => {
     try {
