@@ -4,7 +4,8 @@ const { Sequelize } = require('sequelize');
 const sequelize = new Sequelize(process.env.DB_NAME || 'WASH_DB', process.env.DB_USER || 'admin', process.env.DB_PASSWORD || 'admin',
 {
   host: process.env.DB_HOST || 'localhost',
-  dialect: process.env.SGBD || 'postgres'
+  dialect: process.env.SGBD || 'postgres',
+  port: process.env.DB_PORT || "5432"
 });
 
 const testDbConnection = async () => {
