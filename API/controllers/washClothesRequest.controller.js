@@ -1,6 +1,7 @@
 const washClothesRequestModel = require('../models/washClothesRequest.model');
 const coreAlgo = require('../core/coreAlgo.js');
 const tarification = require('../core/tarification.js');
+const client = require('../models/client.model');
 
 // create controller
 const washClothesRequestController = {};
@@ -28,7 +29,15 @@ washClothesRequestController.createWashClothesRequest = async (req, res) => {
             "VESTE": veste,
         }
 
-        const clientCoordonate = { lat: clientLat, long: clientLong };
+        let clientCoordonate = {}
+
+        if(!clientLat || !clientLong){
+            client_info = await client.findOne({ where: { id: clientId } });
+            const {lat: clientLat, long: clientLong} = client_info.dataValues
+            clientCoordonate = { lat: clientLat, long: clientLong };
+        }else{
+            clientCoordonate = { lat: clientLat, long: clientLong };
+        }
         const bestPressing = await coreAlgo.determineBestPressingForWashClothesRequest(clientCoordonate);
 
         if(!bestPressing){

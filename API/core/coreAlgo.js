@@ -1,5 +1,5 @@
 const pressingController = require('../controllers/pressing.controller');
-const RADIUS_IN_KM = 0 || process.env.RADIUS_IN_KM;
+const RADIUS_IN_KM = -1 || process.env.RADIUS_IN_KM;
 const WASHING_TIME_IN_MINUTES = 60 || process.env.WASHING_TIME_IN_MINUTES;
 const CUSTOMER_WASH_DELIVERY_TIME_IN_MINUTES = 60 * 48 || process.env.CUSTOMER_WASH_DELIVERY_TIME_IN_MINUTES;
 const washClothesRequestModel = require('../models/washClothesRequest.model');
@@ -38,8 +38,9 @@ const retrieveRequestPerPressing = async (pressingAroundClient) => {
 const determineBestPressing = async (requestPerPressing) => {
     const result = [];
     for (const req of requestPerPressing) {
-        console.log("reqId", req.pressingId, "reqCount", req.requestcount);
-        if (req.requestcount * WASHING_TIME_IN_MINUTES < CUSTOMER_WASH_DELIVERY_TIME_IN_MINUTES) {
+        let count = req.requestcount?req.requestcount:0
+        console.log("reqId", req.pressingId, "reqCount", count);
+        if (count * WASHING_TIME_IN_MINUTES < CUSTOMER_WASH_DELIVERY_TIME_IN_MINUTES) {
             const pressingInfo = await pressingController.getPressingInfoById(req.pressingId);
             result.push(pressingInfo);
         }
@@ -126,8 +127,8 @@ const determineBestPressingForWashClothesRequest = async (clientCoordinate) => {
         const requestPerPressing = await retrieveRequestPerPressing(pressingAroundClient);
         const bestPressing = await determineBestPressing(requestPerPressing);
         const randomPressing = Math.floor(Math.random() * bestPressing.length);
-
-        return bestPressing[randomPressing];
+        best = bestPressing[randomPressing];
+        return best
     } catch (err) {
         console.log(err);
     }

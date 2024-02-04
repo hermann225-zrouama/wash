@@ -16,9 +16,23 @@ const saltRounds = 10
  * @throws {Error} error
  */
 
+// TODO: create temp phone number verification:
+// Validation du compte
+
 clientController.createClient = async (req, res) => {
     try{
         const { firstName, lastName, email, phoneNumber,password } = req.body;
+
+        // verification phone number
+        const regex = new RegExp("^[0-9]{10}$");
+        if (!regex.test(phoneNumber)) {
+            return res.status(400).json({ message: 'Vérifier votre numéro de téléphone' });
+        }
+
+        const mailRegex = new RegExp("^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]{2,}\.[a-z]{2,4}$");
+        if (!mailRegex.test(email)) {
+            return res.status(400).json({ message: 'Vérifier votre adresse email' });
+        }
 
         // check if client already exists by email or phoneNumber
         const existingClient = await client.findOne({ where: { email: email } });

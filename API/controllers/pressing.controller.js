@@ -20,6 +20,17 @@ pressingController.createPressing = async (req, res) => {
     try{
         const { name, lat, long, phoneNumber,password, address } = req.body;
 
+        // verification phone number
+        const regex = new RegExp("^[0-9]{10}$");
+        if (!regex.test(phoneNumber)) {
+            return res.status(400).json({ message: 'Vérifier votre numéro de téléphone' });
+        }
+
+        const mailRegex = new RegExp("^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]{2,}\.[a-z]{2,4}$");
+        if (!mailRegex.test(email)) {
+            return res.status(400).json({ message: 'Vérifier votre adresse email' });
+        }
+
         // check if pressing already exists by email or phoneNumber
         const existingPressing = await pressing.findOne({ where: { phoneNumber: phoneNumber } });
         if (existingPressing) {
