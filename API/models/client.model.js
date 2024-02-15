@@ -34,6 +34,10 @@ const client = sq.define('client', {
         type: DataTypes.STRING,
         allowNull: false,
         defaultValue: "0"
+    },
+    verirfie: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     }
 }, {freezeTableName: true});
 

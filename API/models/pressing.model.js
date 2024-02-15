@@ -30,6 +30,10 @@ const pressing = sq.define('pressing', {
         allowNull: true,
         defaultValue: 5
     },
+    authorized: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    }
 }, { freezeTableName: true });
 
 pressing.sync({ alter: true });

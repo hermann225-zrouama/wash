@@ -20,8 +20,8 @@ const saltRounds = 10
 // Validation du compte
 
 clientController.createClient = async (req, res) => {
-    try{
-        const { firstName, lastName, email, phoneNumber,password } = req.body;
+    try {
+        const { firstName, lastName, email, phoneNumber, password } = req.body;
 
         // verification phone number
         const regex = new RegExp("^[0-9]{10}$");
@@ -58,11 +58,55 @@ clientController.createClient = async (req, res) => {
 
         res.status(201).json(newClient);
 
-    }catch(err){
+    } catch (err) {
         console.log(err);
         return res.status(500).json({ message: err });
     }
 }
+
+clientController.verifyNumber = async (req, res) => {
+    try {
+        // Assuming secure OTP generation and storage (not shown here)
+
+        const { id, phoneNumber, otpCode } = req.body;
+
+        const existingClient = await client.findOne({
+            where: { id: id, phoneNumber: phoneNumber },
+        });
+
+        if (!existingClient) {
+            return res.status(400).json({ message: 'Utilisateur introuvable' });
+        }
+
+        const valid = await verifyOtp(otpCode, trueOtpCode); // Replace with your secure verification logic
+
+        if (!valid) {
+            // Handle invalid OTP (e.g., res.status(401).json({ message: 'Code incorrect' }))
+            // Consider implementing rate limiting or account locking mechanisms
+            return;
+        }
+
+        // Update verifiedUser attribute as needed (e.g., existingClient.verified = true; await existingClient.save())
+        existingClient.verified = true; await existingClient.save()
+
+        const { password: clientPassword, id: clientId, ...clientWithoutPassword } = existingClient.dataValues;
+
+        req.session.regenerate(function (err) {
+            if (err) {
+                return res.status(500).json({ message: err });
+            }
+            req.session.user = clientWithoutPassword;
+            res.status(200).json({ message: 'Verification réussie' });
+
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Erreur de vérification' }); // Handle errors gracefully
+    }
+};
+
+
 
 /**
  * Authenticate client
@@ -72,7 +116,7 @@ clientController.createClient = async (req, res) => {
  * @throws {Error} error
  */
 clientController.authenticateClient = async (req, res) => {
-    try{
+    try {
         if (req.session.user) {
             return res.status(200).json({ message: 'Client already authenticated' });
         }
@@ -85,21 +129,21 @@ clientController.authenticateClient = async (req, res) => {
         }
 
         const match = await bcrypt.compare(password, existingClient.password);
-        if(!match){
+        if (!match) {
             return res.status(400).json({ message: 'Vérifiez vos informations' });
         }
 
         const { password: clientPassword, id: clientId, ...clientWithoutPassword } = existingClient.dataValues;
 
-        req.session.regenerate(function(err) {
-            if(err){
+        req.session.regenerate(function (err) {
+            if (err) {
                 return res.status(500).json({ message: err });
             }
             req.session.user = clientWithoutPassword;
             return res.status(200).json(clientWithoutPassword);
         });
 
-    }catch(err){
+    } catch (err) {
         console.log(err);
         return res.status(500).json({ message: err });
     }
@@ -111,19 +155,34 @@ clientController.authenticateClient = async (req, res) => {
  */
 
 clientController.logoutClient = async (req, res) => {
-    try{
-        req.session.destroy(function(err) {
-            if(err){
+    try {
+        req.session.destroy(function (err) {
+            if (err) {
                 return res.status(500).json({ message: err });
             }
             return res.status(200).json({ message: 'Client logged out' });
         });
-    }catch(err){
+    } catch (err) {
         console.log(err);
         return res.status(500).json({ message: err });
     }
 }
 
+clientController.getClient = async (req,res)=>{
+    try {
+        const { id } = req.body
+        const existingClient = await client.findOne({ where: { id: id } });
+        if (!existingClient) {
+            return res.status(400).json({ message: 'Vérifier vos informations' });
+        }
 
+        const { password: clientPassword, ...clientWithoutPassword } = existingClient.dataValues;
+
+        return res.status(200).json(clientWithoutPassword)
+
+    } catch (error) {
+        return res.status(500).json(error)
+    }
+}
 
 module.exports = clientController;
