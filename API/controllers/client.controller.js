@@ -170,15 +170,11 @@ clientController.logoutClient = async (req, res) => {
 
 clientController.getClient = async (req,res)=>{
     try {
-        const { id } = req.body
-        const existingClient = await client.findOne({ where: { id: id } });
-        if (!existingClient) {
-            return res.status(400).json({ message: 'Vérifier vos informations' });
+        if(req.session.user){
+            return req.session.user
         }
 
-        const { password: clientPassword, ...clientWithoutPassword } = existingClient.dataValues;
-
-        return res.status(200).json(clientWithoutPassword)
+        return res.status(401).json({message: "Connexion requise"})
 
     } catch (error) {
         return res.status(500).json(error)
