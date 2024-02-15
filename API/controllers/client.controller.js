@@ -168,13 +168,13 @@ clientController.logoutClient = async (req, res) => {
     }
 }
 
-clientController.getClient = async (req,res)=>{
+clientController.getClient = async (req, res) => {
     try {
-        if(req.session.user){
+        if (req.session.user) {
             return req.session.user
         }
 
-        return res.status(401).json({message: "Connexion requise"})
+        return res.status(401).json({ message: "Connexion requise" })
 
     } catch (error) {
         return res.status(500).json(error)
