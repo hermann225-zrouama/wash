@@ -8,6 +8,6 @@ const clientController = require('../controllers/client.controller');
 router.post('/create', clientController.createClient)
 router.post('/authenticate', clientController.authenticateClient)
 router.get('/logout', clientController.logoutClient)
-router.get('/getclient', clientController.getClient)
+router.post('/getclient', clientController.getClient)
 
 module.exports = router;
