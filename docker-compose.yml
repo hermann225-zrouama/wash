@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres_container
+    hostname: postgres_svr
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    hostname: pgadmin
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin_container
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_PORT: 5050
+    volumes:
+      - ./pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:5050"
+    depends_on:
+      - postgres
+
+  backend:
+    hostname: wash
+    build: .  # Build from the current directory
+    ports:
+      - "3000:3000"
+    environment:  # Add environment variables here
+      DB_NAME: WASH_DB
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_HOST: postgres_svr  # Assuming the database service name is 'postgres'
+      DB_PORT: 5432
+      NODE_ENV: development
+      RADIUS_IN_KM: -1
+      WASHING_TIME_IN_MINUTES: 60
+      SGBD: postgres
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  pgadmin_data:

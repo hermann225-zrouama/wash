@@ -1,2 +1,5 @@
 /API/node_modules
 /API/*.env
+
+/pgadmin_data
+/postgres_data
