@@ -6,6 +6,10 @@ const pressing = sq.define('pressing', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     lat: {
         type: DataTypes.STRING,
         allowNull: false

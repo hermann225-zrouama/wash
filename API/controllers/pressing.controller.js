@@ -18,7 +18,7 @@ const saltRounds = 10
  */
 pressingController.createPressing = async (req, res) => {
     try{
-        const { name, lat, long, phoneNumber,password, address } = req.body;
+        const { name, lat, long, phoneNumber,password, address,email } = req.body;
 
         // verification phone number
         const regex = new RegExp("^[0-9]{10}$");
@@ -45,7 +45,8 @@ pressingController.createPressing = async (req, res) => {
             long,
             phoneNumber,
             password: hashedPassword,
-            address
+            address,
+            email
         });
 
         await newPressing.save();
