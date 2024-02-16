@@ -4,3 +4,5 @@
 
 /pgadmin_data
 /postgres_data
+/API/pgadmin_data
+/API/postgres_data
