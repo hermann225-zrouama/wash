@@ -1,5 +1,6 @@
 /API/node_modules
 /API/*.env
+/API/docker-compose.yml
 
 /pgadmin_data
 /postgres_data
