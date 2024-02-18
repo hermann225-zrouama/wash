@@ -6,5 +6,6 @@ const express = require('express');
 const router = express.Router();
 
 router.post('/register', authenticate, washClothesRequestController.createWashClothesRequest)
+router.post('/price',authenticate, washClothesRequestController.getPrice)
 
 module.exports = router;
