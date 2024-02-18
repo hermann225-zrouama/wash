@@ -1,7 +1,11 @@
 /API/node_modules
 /API/*.env
+
+# personnal database docker data
 /API/docker-compose.yml
 /API/pgadmin_data
 /API/postgres_data
+
+# docker volumes
 /pgadmin_data
 /postgres_data

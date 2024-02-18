@@ -33,6 +33,6 @@ app.use(session({
 app.use('/client', clientRouter);
 app.use('/pressing', pressingRouter);
 app.use('/washclothesrequest', washClothesRequestRouter);
-app.use('/',globalRouter)
+app.use('/', globalRouter)
 
 module.exports = app;
