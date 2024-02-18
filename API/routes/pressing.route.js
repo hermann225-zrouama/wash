@@ -5,9 +5,9 @@ const authenticate = require('../middleware/auth.middleware');
 const express = require('express');
 const router = express.Router();
 
-router.post('/create', pressingController.createPressing)
-router.post('/authenticate', pressingController.authenticatePressing)
-router.get('/getPressing',authenticate, pressingController.getPressing)
+router.post('/register', pressingController.createPressing)
+router.post('/login', pressingController.authenticatePressing)
+router.get('/getpressingbyid',authenticate, pressingController.getPressing)
 router.get('/logout', pressingController.logoutPressing)
 
 module.exports = router;

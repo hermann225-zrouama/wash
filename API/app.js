@@ -8,6 +8,7 @@ const session = require('express-session');
 const clientRouter = require('./routes/client.route');
 const pressingRouter = require('./routes/pressing.route');
 const washClothesRequestRouter = require('./routes/washClothesRequest.route');
+const globalRouter = require('./routes/global.route')
 
 // create express app
 const app = express();
@@ -32,5 +33,6 @@ app.use(session({
 app.use('/client', clientRouter);
 app.use('/pressing', pressingRouter);
 app.use('/washclothesrequest', washClothesRequestRouter);
+app.use('/',globalRouter)
 
 module.exports = app;

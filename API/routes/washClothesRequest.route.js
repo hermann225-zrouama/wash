@@ -5,6 +5,6 @@ const authenticate = require('../middleware/auth.middleware');
 const express = require('express');
 const router = express.Router();
 
-router.post('/create', authenticate, washClothesRequestController.createWashClothesRequest)
+router.post('/register', authenticate, washClothesRequestController.createWashClothesRequest)
 
 module.exports = router;
