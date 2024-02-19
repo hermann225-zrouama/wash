@@ -6,97 +6,6 @@ const pressingController = {};
 const saltRounds = 10
 
 /**
- * Create new pressing
- * @param {string} name
- * @param {string} lat
- * @param {string} long
- * @param {string} phoneNumber
- * @param {string} password
- * @param {string} address
- * @returns {object} pressing
- * @throws {Error} error
- */
-pressingController.createPressing = async (req, res) => {
-    try{
-        const { name, lat, long, phoneNumber,password, address,email } = req.body;
-
-        // verification phone number
-        const regex = new RegExp("^[0-9]{10}$");
-        if (!regex.test(phoneNumber)) {
-            return res.status(400).json({ message: 'Vérifier votre numéro de téléphone' });
-        }
-
-        const mailRegex = new RegExp("^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]{2,}\.[a-z]{2,4}$");
-        if (!mailRegex.test(email)) {
-            return res.status(400).json({ message: 'Vérifier votre adresse email' });
-        }
-
-        // check if pressing already exists by email or phoneNumber
-        const existingPressing = await pressing.findOne({ where: { phoneNumber: phoneNumber } });
-        if (existingPressing) {
-            return res.status(400).json({ message: 'Pressing already exists' });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-        const newPressing = new pressing({
-            name,
-            lat,
-            long,
-            phoneNumber,
-            password: hashedPassword,
-            address,
-            email
-        });
-
-        await newPressing.save();
-
-        res.status(201).json(newPressing);
-
-    }catch(err){
-        console.log(err);
-        return res.status(500).json({ message: err });
-    }
-}
-
-/**
- * Authenticate pressing
- * @param {string} phoneNumber
- * @param {string} password
- * @returns {object} pressing
- * @throws {Error} error
- */
-pressingController.authenticatePressing = async (req, res) => {
-    try{
-        if (req.session.user) {
-            return res.status(200).json({ message: 'Pressing already authenticated' });
-        }
-        const { phoneNumber, password } = req.body;
-
-        // check if pressing exists by email
-        const existingPressing = await pressing.findOne({ where: { phoneNumber: phoneNumber } });
-        if (!existingPressing) {
-            return res.status(400).json({ message: 'Vérifier vos informations' });
-        }
-
-        const match = await bcrypt.compare(password, existingPressing.password);
-        if(!match){
-            return res.status(400).json({ message: 'Vérifiez vos informations' });
-        }
-
-        const { password: pressingPassword, id: pressingId, ...pressingWithoutPassword } = existingPressing.dataValues;
-
-        req.session.user = pressingId;
-
-        res.status(200).json(pressingWithoutPassword);
-
-    }catch(err){
-        console.log(err);
-        return res.status(500).json({ message: err });
-    }
-}
-
-/**
  * Get pressing by id
  * @param {string} id
  * @returns {object} pressing
@@ -141,24 +50,6 @@ pressingController.getPressingInfoById = async (pressingId) => {
     }
 }
 
-/**
- * Kill pressing session
- * @returns {object} message
- * @throws {Error} error
- */
-pressingController.logoutPressing = async (req, res) => {
-    try{
-        req.session.destroy(function(err) {
-            if(err){
-                return res.status(500).json({ message: err });
-            }
-            return res.status(200).json({ message: 'Pressing logged out' });
-        });
-    }catch(err){
-        console.log(err);
-        return res.status(500).json({ message: err });
-    }
-}
 
 /**
  * Get coordinates of all pressings
