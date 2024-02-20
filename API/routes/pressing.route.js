@@ -6,5 +6,6 @@ const express = require('express');
 const router = express.Router();
 
 router.get('/getpressingbyid',authenticate, pressingController.getPressing)
+router.get('/update/coordinate',authenticate,pressingController.updateCoordinate)
 
 module.exports = router;

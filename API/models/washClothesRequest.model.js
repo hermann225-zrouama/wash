@@ -7,7 +7,7 @@ const washClothesRequest = sq.define('washClothesRequest', {
         type: DataTypes.DATE,
         allowNull: false
     },
-    time: {
+    delivery_date: {
         type: DataTypes.TIME,
         allowNull: false,
         defaultValue: "00:00:00"

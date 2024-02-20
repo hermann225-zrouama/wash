@@ -1,5 +1,6 @@
 const pressing = require('../models/pressing.model');
 const client = require('../models/client.model');
+const coordinate = require('../models/coordinate.model')
 const bcrypt = require("bcrypt")
 
 const saltRounds = 10
@@ -21,7 +22,7 @@ const authController = {};
  */
 authController.registerClient = async (req, res) => {
     try {
-        const { firstName, lastName, email, phoneNumber, password } = req.body;
+        const { phoneNumber, password } = req.body;
 
         // verification phone number
         const regex = new RegExp("^[0-9]{10}$");
@@ -29,34 +30,28 @@ authController.registerClient = async (req, res) => {
             return res.status(400).json({ message: 'Vérifier votre numéro de téléphone' });
         }
 
-        const mailRegex = new RegExp("^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]{2,}\.[a-z]{2,4}$");
-        if (!mailRegex.test(email)) {
-            return res.status(400).json({ message: 'Vérifier votre adresse email' });
-        }
-
-        // check if client already exists by email or phoneNumber
-        const existingClient = await client.findOne({ where: { email: email } });
+        const existingClient = await client.findOne({ where: { phoneNumber: phoneNumber } });
         if (existingClient) {
-            return res.status(400).json({ message: 'Client already exists' });
-        }
-        const existingClient2 = await client.findOne({ where: { phoneNumber: phoneNumber } });
-        if (existingClient2) {
             return res.status(400).json({ message: 'Client already exists' });
         }
 
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         const newClient = new client({
-            firstName,
-            lastName,
-            email,
             phoneNumber,
             password: hashedPassword,
         });
 
         await newClient.save();
 
-        res.status(201).json(newClient);
+        const newCoordinate = new coordinate({
+            userId: newClient.id,
+            category: "CUSTOMER"
+        })
+
+        await newCoordinate.save()
+
+        res.status(201).json({message:"USER CREATED SUCCESSFULLY"});
 
     } catch (err) {
         console.log(err);
@@ -88,7 +83,7 @@ authController.loginClient = async (req, res) => {
             return res.status(400).json({ message: 'Vérifiez vos informations' });
         }
 
-        const { password: clientPassword, id: clientId, ...clientWithoutPassword } = existingClient.dataValues;
+        const { password: clientPassword, ...clientWithoutPassword } = existingClient.dataValues;
 
         req.session.regenerate(function (err) {
             if (err) {
@@ -137,8 +132,8 @@ authController.logoutClient = async (req, res) => {
  * @throws {Error} error
  */
 authController.registerPressing = async (req, res) => {
-    try{
-        const { name, lat, long, phoneNumber,password, address,email } = req.body;
+    try {
+        const { name, lat, long, phoneNumber, password, address, email } = req.body;
 
         // verification phone number
         const regex = new RegExp("^[0-9]{10}$");
@@ -171,9 +166,16 @@ authController.registerPressing = async (req, res) => {
 
         await newPressing.save();
 
+        const newCoordinate = new coordinate({
+            userId: newPressing.id,
+            category: "PRESSING"
+        })
+
+        await newCoordinate.save()
+
         res.status(201).json(newPressing);
 
-    }catch(err){
+    } catch (err) {
         console.log(err);
         return res.status(500).json({ message: err });
     }
@@ -187,7 +189,7 @@ authController.registerPressing = async (req, res) => {
  * @throws {Error} error
  */
 authController.loginPressing = async (req, res) => {
-    try{
+    try {
         if (req.session.user) {
             return res.status(200).json({ message: 'Pressing already authenticated' });
         }
@@ -200,7 +202,7 @@ authController.loginPressing = async (req, res) => {
         }
 
         const match = await bcrypt.compare(password, existingPressing.password);
-        if(!match){
+        if (!match) {
             return res.status(400).json({ message: 'Vérifiez vos informations' });
         }
 
@@ -210,7 +212,7 @@ authController.loginPressing = async (req, res) => {
 
         res.status(200).json(pressingWithoutPassword);
 
-    }catch(err){
+    } catch (err) {
         console.log(err);
         return res.status(500).json({ message: err });
     }
@@ -222,18 +224,19 @@ authController.loginPressing = async (req, res) => {
  * @throws {Error} error
  */
 authController.logoutPressing = async (req, res) => {
-    try{
-        req.session.destroy(function(err) {
-            if(err){
+    try {
+        req.session.destroy(function (err) {
+            if (err) {
                 return res.status(500).json({ message: err });
             }
             return res.status(200).json({ message: 'Pressing logged out' });
         });
-    }catch(err){
+    } catch (err) {
         console.log(err);
         return res.status(500).json({ message: err });
     }
 }
+
 
 
 module.exports = authController

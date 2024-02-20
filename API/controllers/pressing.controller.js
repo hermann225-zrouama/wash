@@ -3,7 +3,6 @@ const bcrypt = require("bcrypt")
 
 // create controller
 const pressingController = {};
-const saltRounds = 10
 
 /**
  * Get pressing by id
@@ -20,7 +19,7 @@ pressingController.getPressing = async (req, res) => {
             return res.status(400).json({ message: 'Pressing does not exist' });
         }
 
-        const { password: pressingPassword, id: pressingId, ...pressingWithoutPassword } = existingPressing.dataValues;
+        const { password: pressingPassword, id: pressingId, ...pressingWithoutPassword } = existingpressing.dataValues;
 
         res.status(200).json(pressingWithoutPassword);
 
@@ -76,6 +75,70 @@ pressingController.getPressingCoordinates = async () => {
     }
 }
 
+
+pressingController.getCoordinate = async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+
+        // Assuming you have a Sequelize model named 'Pressing'
+        const coordinates = await pressing.findOne({
+            where: {
+                userId: userId,
+                pressing: "PRESSING"
+            },
+        });
+
+        if (!coordinates) {
+            return res.status(404).json({ message: 'Pressing coordinates not found for the user.' });
+        }
+
+        // If coordinates are found, you can send them in the response
+        return res.status(200).json({ coordinates: coordinates });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error.' });
+    }
+};
+
+pressingController.updateCoordinate = async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const { latitude, longitude } = req.body;
+
+        // Assuming you have a Sequelize model named 'Pressing'
+        let coordinates = await pressing.findOne({
+            where: {
+                userId: userId,
+                category: "PRESSING"
+            },
+        });
+
+        if (!coordinates) {
+            // If coordinates don't exist, you may choose to create them
+            coordinates = await pressing.create({
+                userId: userId,
+                latitude: latitude,
+                longitude: longitude,
+                category: "PRESSING"
+            });
+
+            return res.status(201).json({ message: 'Pressing coordinates created successfully.', coordinates: coordinates });
+        }
+
+        // If coordinates exist, update them
+        await coordinates.update({
+            latitude: latitude,
+            longitude: longitude,
+        });
+
+        return res.status(200).json({ message: 'Pressing coordinates updated successfully.', coordinates: coordinates });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error.' });
+    }
+};
 
 
 module.exports = pressingController;

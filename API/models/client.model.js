@@ -8,34 +8,26 @@ const { sq } = require('../db/init.db');
 const client = sq.define('client', {
     firstName: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
     },
     lastName: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     email: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
         unique: true,
     },
     phoneNumber: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        allowNull: false
     },
     password: {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    lat: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        defaultValue: "0"
-    },
-    long: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        defaultValue: "0"
-    },
-    verirfie: {
+    verified: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
     }

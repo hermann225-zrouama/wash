@@ -2,6 +2,8 @@ const washClothesRequestModel = require('../models/washClothesRequest.model');
 const coreAlgo = require('../core/coreAlgo.js');
 const tarification = require('../core/tarification.js');
 const client = require('../models/client.model');
+const coordinate = require('../models/coordinate.model.js');
+const clientController = require('./client.controller.js');
 
 // create controller
 const washClothesRequestController = {};
@@ -20,38 +22,35 @@ const washClothesRequestController = {};
  */
 washClothesRequestController.createWashClothesRequest = async (req, res) => {
     try{
-        const { clientId, clientLat, clientLong,tshirt,pantalon,chemise,veste } = req.body;
+        const request = req.body;
 
-        const clothesRequestItems = {
-            "TSHIRT": tshirt,
-            "PANTALON": pantalon,
-            "CHEMISE": chemise,
-            "VESTE": veste,
+        const price = tarification(request);
+
+        if(price === 0 || !request){
+            return res.status(400).json({ message:"requête vide" })
         }
 
-        let clientCoordonate = {}
+        const userId = req.session.user.id
+        let clientCoordonate = await clientController.getCoordinate(userId)
+        
+        const clientLat = clientCoordonate.lat
+        const clientLong = clientCoordonate.long
 
-        if(!clientLat || !clientLong){
-            client_info = await client.findOne({ where: { id: clientId } });
-            const {lat: clientLat, long: clientLong} = client_info.dataValues
-            clientCoordonate = { lat: clientLat, long: clientLong };
-        }else{
-            clientCoordonate = { lat: clientLat, long: clientLong };
-        }
+        clientCoordonate = { lat: clientLat, long: clientLong };
+        console.log(clientCoordonate) 
+        
         const bestPressing = await coreAlgo.determineBestPressingForWashClothesRequest(clientCoordonate);
 
         if(!bestPressing){
             return res.status(400).json({ message: 'Aucun pressing disponible' });
         }
 
-        const price = tarification(clothesRequestItems);
-
         const newWashClothesRequest = new washClothesRequestModel({
             date: new Date(),
-            washClothesRequestItems: clothesRequestItems,
-            price,
+            washClothesRequestItems: request,
+            price: price,
             pressingId: bestPressing.id,
-            clientId,
+            clientId: userId,
         });
 
         await newWashClothesRequest.save();
@@ -66,13 +65,13 @@ washClothesRequestController.createWashClothesRequest = async (req, res) => {
 
 washClothesRequestController.getPrice = async (req,res) =>{
     try {
-        let { request } = req.body
-        const price = tarification(request);
+        const price = tarification(req.body);
 
         return res.status(200).json({price: price})
 
     } catch (error) {
         console.log(error)
+        res.status(500).json({message: "erreur get price"})
     }
 }
 

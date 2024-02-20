@@ -59,6 +59,10 @@ const determineBestPressing = async (requestPerPressing) => {
  */
 
 const calcDistance = (clientCoordinate, pressingCoordinate) => {
+    if (clientCoordinate.lat === pressingCoordinate.lat && clientCoordinate.long === pressingCoordinate.long) {
+        return 0; // You may choose to return 0 or another suitable value
+    }
+
     const R = 6371e3; // metres
     const φ1 = clientCoordinate.lat * Math.PI / 180; // φ, λ in radians
     const φ2 = pressingCoordinate.lat * Math.PI / 180;

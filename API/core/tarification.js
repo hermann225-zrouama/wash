@@ -1,7 +1,7 @@
 let clothesCategoryBindingPrices = {
     "TSHIRT": 0,
-    "PANTALON": 0,
-    "CHEMISE": 0,
+    "PANTALON": 100,
+    "CHEMISE": 200,
     "VESTE": 0,
     "DRAP": 0
 }

@@ -10,14 +10,6 @@ const pressing = sq.define('pressing', {
         type: DataTypes.STRING,
         allowNull: false
     },
-    lat: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    long: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
     phoneNumber: {
         type: DataTypes.STRING
     },
