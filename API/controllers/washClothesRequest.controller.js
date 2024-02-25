@@ -2,6 +2,7 @@ const washClothesRequestModel = require('../models/washClothesRequest.model');
 const coreAlgo = require('../core/coreAlgo.js');
 const tarification = require('../core/tarification.js');
 const customerController = require('./customer.controller.js');
+const crypto = require("crypto")
 
 // create controller
 const washClothesRequestController = {};
@@ -57,7 +58,7 @@ washClothesRequestController.createWashClothesRequest = async (req, res) => {
             return res.status(400).json({ message:"request empty", info:"request" })
         }
 
-        const userId = req.session.user.id
+        const userId = req.user.id
         let customerCoordinate = await customerController.getCoordinate(userId)
         
         const customerLat = customerCoordinate.lat
@@ -78,6 +79,7 @@ washClothesRequestController.createWashClothesRequest = async (req, res) => {
             price: price,
             pressingId: bestPressing.id,
             customerId: userId,
+            id: crypto.randomUUID()
         });
 
         await newWashClothesRequest.save();

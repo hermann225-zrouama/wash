@@ -6,6 +6,10 @@ const { sq } = require('../db/init.db');
 
 
 const customer = sq.define('customer', {
+    id: {
+        type: DataTypes.UUID,
+        primaryKey: true,
+      },
     firstName: {
         type: DataTypes.STRING,
         allowNull: true

@@ -3,6 +3,10 @@ const {DataTypes} = require('sequelize');
 const {sq} = require('../db/init.db');
 
 const washClothesRequest = sq.define('washClothesRequest', {
+    id: {
+        type: DataTypes.UUID,
+        primaryKey: true,
+      },
     date: {
         type: DataTypes.DATE,
         allowNull: false
@@ -22,11 +26,11 @@ const washClothesRequest = sq.define('washClothesRequest', {
         allowNull: false,
     },
     pressingId: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: false
     },
     customerId: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: false
     },
     rating: {

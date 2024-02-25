@@ -89,7 +89,7 @@ pressingController.getPressingCoordinates = async () => {
 
 pressingController.updateCoordinate = async (req, res) => {
     try {
-        const userId = req.session.user.id;
+        const userId = req.user.id;
         const { lat, long } = req.body;
 
         if (!lat || typeof lat !== 'number') {

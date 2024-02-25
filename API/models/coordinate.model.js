@@ -4,7 +4,7 @@ const { sq } = require('../db/init.db');
 const coordinate = sq.define('coordinate',
 {
     userId:{
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         allowNull: false
     },
     lat:{

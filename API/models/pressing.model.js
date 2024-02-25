@@ -2,6 +2,10 @@ const { DataTypes } = require('sequelize');
 const { sq } = require('../db/init.db');
 
 const pressing = sq.define('pressing', {
+    id: {
+        type: DataTypes.UUID,
+        primaryKey: true,
+      },
     name: {
         type: DataTypes.STRING,
         allowNull: false

@@ -5,7 +5,7 @@ const customerController = {};
 
 customerController.getCustomer = async (req, res) => {
     try {
-        if (req.session.user) {
+        if (req.user) {
             return req.session.user;
         }
 
@@ -35,7 +35,7 @@ customerController.updateCustomer = async (req, res) => {
         }
 
         // Get customer ID from session
-        const id = req.session.user.id;
+        const id = req.user.id;
 
         // Find the customer to update
         const customerToUpdate = await customer.findOne({
@@ -94,7 +94,7 @@ customerController.getCoordinate = async (id) => {
 
 customerController.updateCoordinate = async (req, res) => {
     try {
-        const id = req.session.user.id;
+        const id = req.user.id;
         const { lat, long } = req.body;
 
         if (!lat || typeof lat !== 'number') {

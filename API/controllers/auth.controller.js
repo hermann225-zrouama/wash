@@ -1,7 +1,11 @@
+const jwt = require('jsonwebtoken');
 const Pressing = require('../models/pressing.model');
 const Customer = require('../models/customer.model');
+const RefreshToken = require('../models/refreshToken.model')
 const Coordinate = require('../models/coordinate.model')
 const bcrypt = require("bcrypt")
+const crypto = require('crypto');
+
 
 const saltRounds = 10
 
@@ -30,7 +34,7 @@ authController.registerCustomer = async (req, res) => {
             return res.status(400).json({ message: 'Invalid phone number', info: 'phoneNumber' });
         }
 
-        if(!regexPassword.test(password)){
+        if (!regexPassword.test(password)) {
             return res.status(400).json({ message: 'Weak password', info: 'password' });
         }
 
@@ -44,6 +48,7 @@ authController.registerCustomer = async (req, res) => {
         const newCustomer = new Customer({
             phoneNumber,
             password: hashedPassword,
+            id: crypto.randomUUID()
         });
 
         await newCustomer.save();
@@ -72,7 +77,6 @@ authController.registerCustomer = async (req, res) => {
  */
 authController.loginCustomer = async (req, res) => {
     try {
-
         const { phoneNumber, password } = req.body;
 
         // check if customer exists by email
@@ -86,22 +90,43 @@ authController.loginCustomer = async (req, res) => {
             return res.status(400).json({ message: 'Incorrect information' });
         }
 
-        const { password: customerPassword,id: customerId, ...customerWithoutPassword } = existingCustomer.dataValues;
+        const { password: customerPassword, id: customerId, ...customerWithoutPassword } = existingCustomer.dataValues;
 
-        req.session.regenerate(function (err) {
-            if (err) {
-                return res.status(500).json({ message: err });
+        // JWT
+        const accessToken = jwt.sign(
+            customerWithoutPassword,
+            process.env.JWT_SECRET || "secret",
+            {
+                algorithm: process.env.JWT_ALG || 'HS256',
+                audience: process.env.JWT_AUDIENCE || 'default_audience',
+                expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '1h',
+                issuer: process.env.JWT_ISSUER || 'default_issuer',
+                subject: customerId.toString()
             }
-            req.session.user = customerWithoutPassword;
-            req.session.user.id = customerId
-            return res.status(200).json(customerWithoutPassword);
+        );
+
+        const refreshToken = crypto.randomBytes(128).toString('base64');
+
+        await RefreshToken.create({
+            userId: customerId,
+            token: refreshToken,
+            expiresAt: Date.now() + (process.env.JWT_REFRESH_TOKEN_EXPIRES_IN || 30 * 24 * 60 * 60 * 1000)
+        });
+
+        return res.status(200).json({
+            accessToken,
+            tokenType: process.env.JWT_ACCESS_TOKEN_TYPE || 'Bearer',
+            accessTokenExpiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '1h',
+            refreshToken,
+            refreshTokenExpiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN || 30 * 24 * 60 * 60 * 1000
         });
 
     } catch (err) {
         console.log(err);
         return res.status(500).json({ message: err });
     }
-}
+};
+
 
 /**
  * Kill customer session
@@ -110,15 +135,18 @@ authController.loginCustomer = async (req, res) => {
 
 authController.logoutCustomer = async (req, res) => {
     try {
-        req.session.destroy(function (err) {
-            if (err) {
-                return res.status(500).json({ message: err });
-            }
-            return res.status(200).json({ message: 'Logout successful' });
+        const userId = req.user.id;
+
+        await RefreshToken.destroy({
+            where: { userId: userId },
         });
-    } catch (err) {
-        console.log(err);
-        return res.status(500).json({ message: err });
+
+        req.user = null
+
+        res.status(200).json({ message: 'Logout successful' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 }
 
@@ -180,7 +208,8 @@ authController.registerPressing = async (req, res) => {
             phoneNumber,
             password: hashedPassword,
             address,
-            email
+            email,
+            id: crypto.randomUUID()
         });
 
         await newPressing.save();
@@ -194,7 +223,7 @@ authController.registerPressing = async (req, res) => {
 
         await newCoordinate.save()
 
-        res.status(200).json({message: 'Pressing account created succesfully'})
+        res.status(200).json({ message: 'Pressing account created succesfully' })
 
     } catch (err) {
         console.log(err);
@@ -251,15 +280,18 @@ authController.loginPressing = async (req, res) => {
  */
 authController.logoutPressing = async (req, res) => {
     try {
-        req.session.destroy(function (err) {
-            if (err) {
-                return res.status(500).json({ message: err });
-            }
-            return res.status(200).json({ message: 'Pressing logged out' });
+        const userId = req.user.id;
+
+        await RefreshToken.destroy({
+            where: { userId: userId },
         });
-    } catch (err) {
-        console.log(err);
-        return res.status(500).json({ message: err });
+
+        req.user = null
+
+        res.status(200).json({ message: 'Logout successful' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 }
 
