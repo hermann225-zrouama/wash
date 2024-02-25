@@ -46,7 +46,7 @@ function isValidRequest(request) {
  */
 washClothesRequestController.createWashClothesRequest = async (req, res) => {
     try{
-        const request = req.body;
+        const {request, lat, long} = req.body;
 
         if(!isValidRequest(request)){
             return res.status(400).json({ message:"bad request object",info:'request' })
@@ -59,12 +59,8 @@ washClothesRequestController.createWashClothesRequest = async (req, res) => {
         }
 
         const userId = req.user.id
-        let customerCoordinate = await customerController.getCoordinate(userId)
         
-        const customerLat = customerCoordinate.lat
-        const customerLong = customerCoordinate.long
-
-        customerCoordinate = { lat: customerLat, long: customerLong };
+        customerCoordinate = { lat: lat, long: long };
         console.log(customerCoordinate) 
         
         const bestPressing = await coreAlgo.determineBestPressingForWashClothesRequest(customerCoordinate);
