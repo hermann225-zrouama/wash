@@ -5,6 +5,8 @@ const authenticate = require('../middleware/auth.middleware');
 
 const authController = require('../controllers/auth.controller');
 
+router.post('/token/refresh', authenticate,authController.refreshToken)
+
 // customer
 router.post('/register/customer', authController.registerCustomer)
 router.post('/login/customer', authController.loginCustomer)

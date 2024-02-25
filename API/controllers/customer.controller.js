@@ -6,7 +6,7 @@ const customerController = {};
 customerController.getCustomer = async (req, res) => {
     try {
         if (req.user) {
-            return req.session.user;
+            return req.user;
         }
 
         return res.status(401).json({ message: "Authentication required" });

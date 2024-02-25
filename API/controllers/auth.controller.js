@@ -82,7 +82,7 @@ authController.loginCustomer = async (req, res) => {
         // check if customer exists by email
         const existingCustomer = await Customer.findOne({ where: { phoneNumber: phoneNumber } });
         if (!existingCustomer) {
-            return res.status(400).json({ message: 'Incorrect information' });
+            return res.status(401).json({ message: 'Incorrect information' });
         }
 
         const match = await bcrypt.compare(password, existingCustomer.password);
@@ -94,12 +94,15 @@ authController.loginCustomer = async (req, res) => {
 
         // JWT
         const accessToken = jwt.sign(
-            customerWithoutPassword,
+            { 
+                id: existingCustomer.id, 
+                email: existingCustomer.email, 
+            },
             process.env.JWT_SECRET || "secret",
             {
                 algorithm: process.env.JWT_ALG || 'HS256',
                 audience: process.env.JWT_AUDIENCE || 'default_audience',
-                expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '1h',
+                expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '3600',
                 issuer: process.env.JWT_ISSUER || 'default_issuer',
                 subject: customerId.toString()
             }
@@ -296,3 +299,56 @@ authController.logoutPressing = async (req, res) => {
 }
 
 module.exports = authController;
+
+
+authController.refreshToken = async (req, res) => {
+    try {
+        const { refreshToken } = req.body;
+
+        const existingToken = await RefreshToken.findOne({ where: { token: refreshToken } });
+
+        if (!existingToken) {
+            return res.status(401).json({ message: 'Invalid refresh token' });
+        }
+
+        const customer = await Customer.findByPk(existingToken.userId);
+
+        if (!customer) {
+            return res.status(401).json({ message: 'User not found' });
+        }
+
+        const accessToken = jwt.sign(
+            { 
+                id: customer.id, 
+                email: customer.email, 
+            },
+            process.env.JWT_SECRET || 'secret',
+            {
+                algorithm: process.env.JWT_ALG || 'HS256',
+                audience: process.env.JWT_AUDIENCE || 'default_audience',
+                expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '3600',
+                issuer: process.env.JWT_ISSUER || 'default_issuer',
+                subject: customer.id.toString(),
+            }
+        );
+
+        const newRefreshToken = crypto.randomBytes(128).toString('base64');
+
+        await existingToken.update({
+            token: newRefreshToken,
+            expiresAt: Date.now() + process.env.JWT_REFRESH_TOKEN_EXPIRES_IN || (24 * 60 * 60 * 1000),
+        });
+
+        return res.status(200).json({
+            accessToken,
+            tokenType: process.env.JWT_ACCESS_TOKEN_TYPE || 'Bearer',
+            accessTokenExpiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '3600',
+            refreshToken: newRefreshToken,
+            refreshTokenExpiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN || (24 * 60 * 60),
+        });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
