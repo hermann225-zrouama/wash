@@ -5,10 +5,10 @@ const authenticate = require('../middleware/auth.middleware');
 
 const authController = require('../controllers/auth.controller');
 
-// CLIENT
-router.post('/register/client', authController.registerClient)
-router.post('/login/client', authController.loginClient)
-router.get('/logout/client',authenticate, authController.logoutClient)
+// customer
+router.post('/register/customer', authController.registerCustomer)
+router.post('/login/customer', authController.loginCustomer)
+router.get('/logout/customer',authenticate, authController.logoutCustomer)
 
 // PRESSING
 router.post('/register/pressing', authController.registerPressing)

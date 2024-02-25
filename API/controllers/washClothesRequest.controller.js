@@ -1,18 +1,41 @@
 const washClothesRequestModel = require('../models/washClothesRequest.model');
 const coreAlgo = require('../core/coreAlgo.js');
 const tarification = require('../core/tarification.js');
-const client = require('../models/client.model');
-const coordinate = require('../models/coordinate.model.js');
-const clientController = require('./client.controller.js');
+const customerController = require('./customer.controller.js');
 
 // create controller
 const washClothesRequestController = {};
 
+function isValidRequest(request) {
+    if (typeof request !== 'object' || request === null || Array.isArray(request)) {
+        return false;
+    }
+    const requestModel = {
+        "TSHIRT": 0,
+        "PANTALON": 0,
+        "CHEMISE": 0,
+        "VESTE": 0,
+        "DRAP": 0
+    };
+    const validKeys = Object.keys(requestModel);
+
+    const requestKeys = Object.keys(request);
+    const isValidKeys = requestKeys.every(key => validKeys.includes(key));
+
+    if (!isValidKeys) {
+        return false;
+    }
+
+    const isValidValues = requestKeys.every(key => typeof request[key] === 'number');
+
+    return isValidValues;
+}
+
 /**
  * Create a new wash clothes request
- * @param {string} clientId
- * @param {string} clientLat
- * @param {string} clientLong
+ * @param {string} customerId
+ * @param {string} customerLat
+ * @param {string} customerLong
  * @param {string} tshirt
  * @param {string} pantalon
  * @param {string} chemise
@@ -24,22 +47,26 @@ washClothesRequestController.createWashClothesRequest = async (req, res) => {
     try{
         const request = req.body;
 
+        if(!isValidRequest(request)){
+            return res.status(400).json({ message:"bad request object",info:'request' })
+        }
+
         const price = tarification(request);
 
         if(price === 0 || !request){
-            return res.status(400).json({ message:"requête vide" })
+            return res.status(400).json({ message:"request empty", info:"request" })
         }
 
         const userId = req.session.user.id
-        let clientCoordonate = await clientController.getCoordinate(userId)
+        let customerCoordinate = await customerController.getCoordinate(userId)
         
-        const clientLat = clientCoordonate.lat
-        const clientLong = clientCoordonate.long
+        const customerLat = customerCoordinate.lat
+        const customerLong = customerCoordinate.long
 
-        clientCoordonate = { lat: clientLat, long: clientLong };
-        console.log(clientCoordonate) 
+        customerCoordinate = { lat: customerLat, long: customerLong };
+        console.log(customerCoordinate) 
         
-        const bestPressing = await coreAlgo.determineBestPressingForWashClothesRequest(clientCoordonate);
+        const bestPressing = await coreAlgo.determineBestPressingForWashClothesRequest(customerCoordinate);
 
         if(!bestPressing){
             return res.status(400).json({ message: 'Aucun pressing disponible' });
@@ -50,7 +77,7 @@ washClothesRequestController.createWashClothesRequest = async (req, res) => {
             washClothesRequestItems: request,
             price: price,
             pressingId: bestPressing.id,
-            clientId: userId,
+            customerId: userId,
         });
 
         await newWashClothesRequest.save();

@@ -22,11 +22,11 @@ const washClothesRequest = sq.define('washClothesRequest', {
         allowNull: false,
     },
     pressingId: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: false
     },
-    clientId: {
-        type: DataTypes.STRING,
+    customerId: {
+        type: DataTypes.INTEGER,
         allowNull: false
     },
     rating: {

@@ -1,7 +1,6 @@
-const pressing = require('../models/pressing.model');
-const bcrypt = require("bcrypt")
+const Pressing = require('../models/pressing.model');
+const Coordinate = require("../models/coordinate.model")
 
-// create controller
 const pressingController = {};
 
 /**
@@ -14,12 +13,12 @@ pressingController.getPressing = async (req, res) => {
     try{
         const { id } = req.params;
 
-        const existingPressing = await pressing.findOne({ where: { id: id } });
+        const existingPressing = await Pressing.findOne({ where: { id: id } });
         if (!existingPressing) {
             return res.status(400).json({ message: 'Pressing does not exist' });
         }
 
-        const { password: pressingPassword, id: pressingId, ...pressingWithoutPassword } = existingpressing.dataValues;
+        const { password: pressingPassword, id: pressingId, ...pressingWithoutPassword } = existingPressing.dataValues;
 
         res.status(200).json(pressingWithoutPassword);
 
@@ -36,7 +35,7 @@ pressingController.getPressing = async (req, res) => {
  */
 pressingController.getPressingInfoById = async (pressingId) => {
     try{
-        const existingPressing = await pressing.findOne({ where: { id: pressingId } });
+        const existingPressing = await Pressing.findOne({ where: { id: pressingId } });
         if (!existingPressing) {
             return res.status(400).json({ message: 'Pressing does not exist' });
         }
@@ -56,58 +55,52 @@ pressingController.getPressingInfoById = async (pressingId) => {
  * @throws {Error} error
  */
 pressingController.getPressingCoordinates = async () => {
-    try{
-        const pressings = await pressing.findAll();
+    try {
+        const pressings = await Pressing.findAll();
 
-        const pressingsCoordinates = pressings.map(pressing => {
+        const pressingsCoordinatesPromises = pressings.map(async pressing => {
+            const coordinates = await Coordinate.findOne({
+                where: {
+                    userId: pressing.id,
+                    category: "PRESSING"
+                },
+            });
+
             return {
                 id: pressing.id,
                 name: pressing.name,
-                lat: pressing.lat,
-                long: pressing.long
-            }
+                lat: coordinates.lat,
+                long: coordinates.long
+            };
         });
+
+        // Utiliser Promise.all pour attendre toutes les promesses générées par map
+        const pressingsCoordinates = await Promise.all(pressingsCoordinatesPromises);
+
         return pressingsCoordinates;
-
-    }catch(err){
-        console.log("get coordinates error");
-        console.log(err);
-    }
-}
-
-
-pressingController.getCoordinate = async (req, res) => {
-    try {
-        const userId = req.session.user.id;
-
-        // Assuming you have a Sequelize model named 'Pressing'
-        const coordinates = await pressing.findOne({
-            where: {
-                userId: userId,
-                pressing: "PRESSING"
-            },
-        });
-
-        if (!coordinates) {
-            return res.status(404).json({ message: 'Pressing coordinates not found for the user.' });
-        }
-
-        // If coordinates are found, you can send them in the response
-        return res.status(200).json({ coordinates: coordinates });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Internal server error.' });
+    } catch (err) {
+        console.error("Error while getting coordinates");
+        console.error(err);
+        throw err; // Rejeter l'erreur pour que l'appelant puisse la gérer
     }
 };
+
+
 
 pressingController.updateCoordinate = async (req, res) => {
     try {
         const userId = req.session.user.id;
-        const { latitude, longitude } = req.body;
+        const { lat, long } = req.body;
 
-        // Assuming you have a Sequelize model named 'Pressing'
-        let coordinates = await pressing.findOne({
+        if (!lat || typeof lat !== 'number') {
+            return res.status(400).json({ message: 'Invalid latitude', info: 'lat' });
+        }
+
+        if (!long || typeof long !== 'number') {
+            return res.status(400).json({ message: 'Invalid longitude', info: 'long' });
+        }
+
+        let coordinates = await Pressing.findOne({
             where: {
                 userId: userId,
                 category: "PRESSING"
@@ -116,27 +109,26 @@ pressingController.updateCoordinate = async (req, res) => {
 
         if (!coordinates) {
             // If coordinates don't exist, you may choose to create them
-            coordinates = await pressing.create({
+            coordinates = await Pressing.create({
                 userId: userId,
-                latitude: latitude,
-                longitude: longitude,
+                lat: lat,
+                long: long,
                 category: "PRESSING"
             });
 
-            return res.status(201).json({ message: 'Pressing coordinates created successfully.', coordinates: coordinates });
+            return res.status(201).json({ message: 'Pressing coordinates created successfully.'});
         }
 
         // If coordinates exist, update them
         await coordinates.update({
-            latitude: latitude,
-            longitude: longitude,
+            lat: lat,
+            long: long,
         });
 
-        return res.status(200).json({ message: 'Pressing coordinates updated successfully.', coordinates: coordinates });
+        return res.status(200).json({ message: 'Pressing coordinates updated successfully.'});
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Internal server error.' });
     }
 };
 

@@ -1,6 +1,6 @@
-const pressing = require('../models/pressing.model');
-const client = require('../models/client.model');
-const coordinate = require('../models/coordinate.model')
+const Pressing = require('../models/pressing.model');
+const Customer = require('../models/customer.model');
+const Coordinate = require('../models/coordinate.model')
 const bcrypt = require("bcrypt")
 
 const saltRounds = 10
@@ -8,50 +8,54 @@ const saltRounds = 10
 // create controller
 const authController = {};
 
-// CLIENT
+const regexPhoneNumber = new RegExp("^\\+(225)(01|05|07)[0-9]{8}$");
+const regexPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+const mailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]{2,}\.[a-z]{2,4}$/;
 
 /**
- * Create new client
+ * Create new customer
  * @param {string} firstName
  * @param {string} lastName
  * @param {string} email
  * @param {string} phoneNumber
  * @param {string} password
- * @returns {object} client
+ * @returns {object} customer
  * @throws {Error} error
  */
-authController.registerClient = async (req, res) => {
+authController.registerCustomer = async (req, res) => {
     try {
         const { phoneNumber, password } = req.body;
 
-        // verification phone number
-        const regex = new RegExp("^[0-9]{10}$");
-        if (!regex.test(phoneNumber)) {
-            return res.status(400).json({ message: 'Vérifier votre numéro de téléphone' });
+        if (!regexPhoneNumber.test(phoneNumber)) {
+            return res.status(400).json({ message: 'Invalid phone number', info: 'phoneNumber' });
         }
 
-        const existingClient = await client.findOne({ where: { phoneNumber: phoneNumber } });
-        if (existingClient) {
-            return res.status(400).json({ message: 'Client already exists' });
+        if(!regexPassword.test(password)){
+            return res.status(400).json({ message: 'Weak password', info: 'password' });
+        }
+
+        const existingCustomer = await Customer.findOne({ where: { phoneNumber: phoneNumber } });
+        if (existingCustomer) {
+            return res.status(400).json({ message: 'Phone number already exists', info: 'phoneNumber' });
         }
 
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        const newClient = new client({
+        const newCustomer = new Customer({
             phoneNumber,
             password: hashedPassword,
         });
 
-        await newClient.save();
+        await newCustomer.save();
 
-        const newCoordinate = new coordinate({
-            userId: newClient.id,
+        const newCoordinate = new Coordinate({
+            userId: newCustomer.id,
             category: "CUSTOMER"
         })
 
         await newCoordinate.save()
 
-        res.status(201).json({message:"USER CREATED SUCCESSFULLY"});
+        res.status(201).json({ message: "USER CREATED SUCCESSFULLY" });
 
     } catch (err) {
         console.log(err);
@@ -59,38 +63,38 @@ authController.registerClient = async (req, res) => {
     }
 }
 
-
 /**
- * Authenticate client
+ * Authenticate customer
  * @param {string} phoneNumber
  * @param {string} password
- * @returns {object} client
+ * @returns {object} customer
  * @throws {Error} error
  */
-authController.loginClient = async (req, res) => {
+authController.loginCustomer = async (req, res) => {
     try {
 
         const { phoneNumber, password } = req.body;
 
-        // check if client exists by email
-        const existingClient = await client.findOne({ where: { phoneNumber: phoneNumber } });
-        if (!existingClient) {
-            return res.status(400).json({ message: 'Vérifier vos informations' });
+        // check if customer exists by email
+        const existingCustomer = await Customer.findOne({ where: { phoneNumber: phoneNumber } });
+        if (!existingCustomer) {
+            return res.status(400).json({ message: 'Incorrect information' });
         }
 
-        const match = await bcrypt.compare(password, existingClient.password);
+        const match = await bcrypt.compare(password, existingCustomer.password);
         if (!match) {
-            return res.status(400).json({ message: 'Vérifiez vos informations' });
+            return res.status(400).json({ message: 'Incorrect information' });
         }
 
-        const { password: clientPassword, ...clientWithoutPassword } = existingClient.dataValues;
+        const { password: customerPassword,id: customerId, ...customerWithoutPassword } = existingCustomer.dataValues;
 
         req.session.regenerate(function (err) {
             if (err) {
                 return res.status(500).json({ message: err });
             }
-            req.session.user = clientWithoutPassword;
-            return res.status(200).json(clientWithoutPassword);
+            req.session.user = customerWithoutPassword;
+            req.session.user.id = customerId
+            return res.status(200).json(customerWithoutPassword);
         });
 
     } catch (err) {
@@ -100,17 +104,17 @@ authController.loginClient = async (req, res) => {
 }
 
 /**
- * Kill client session
+ * Kill customer session
  * @returns {object} message
  */
 
-authController.logoutClient = async (req, res) => {
+authController.logoutCustomer = async (req, res) => {
     try {
         req.session.destroy(function (err) {
             if (err) {
                 return res.status(500).json({ message: err });
             }
-            return res.status(200).json({ message: 'Client logged out' });
+            return res.status(200).json({ message: 'Logout successful' });
         });
     } catch (err) {
         console.log(err);
@@ -135,29 +139,44 @@ authController.registerPressing = async (req, res) => {
     try {
         const { name, lat, long, phoneNumber, password, address, email } = req.body;
 
-        // verification phone number
-        const regex = new RegExp("^[0-9]{10}$");
-        if (!regex.test(phoneNumber)) {
-            return res.status(400).json({ message: 'Vérifier votre numéro de téléphone' });
+        if (!name || typeof name !== 'string') {
+            return res.status(400).json({ message: 'Invalid name', info: 'name' });
         }
 
-        const mailRegex = new RegExp("^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]{2,}\.[a-z]{2,4}$");
+        // Add validations for lat and long as needed
+        if (!lat || typeof lat !== 'number') {
+            return res.status(400).json({ message: 'Invalid latitude', info: 'lat' });
+        }
+
+        if (!long || typeof long !== 'number') {
+            return res.status(400).json({ message: 'Invalid longitude', info: 'long' });
+        }
+
+        if (!regexPhoneNumber.test(phoneNumber)) {
+            return res.status(400).json({ message: 'Invalid phone number', info: 'phoneNumber' });
+        }
+
+        if (!regexPassword.test(password)) {
+            return res.status(400).json({ message: 'Weak password', info: 'password' });
+        }
+
         if (!mailRegex.test(email)) {
-            return res.status(400).json({ message: 'Vérifier votre adresse email' });
+            return res.status(400).json({ message: 'Invalid email address', info: 'email' });
         }
 
-        // check if pressing already exists by email or phoneNumber
-        const existingPressing = await pressing.findOne({ where: { phoneNumber: phoneNumber } });
+        if (!address || typeof address !== 'string') {
+            return res.status(400).json({ message: 'Invalid address', info: 'address' });
+        }
+
+        const existingPressing = await Pressing.findOne({ where: { phoneNumber: phoneNumber } });
         if (existingPressing) {
-            return res.status(400).json({ message: 'Pressing already exists' });
+            return res.status(400).json({ message: 'Phone number already exists', info: 'phoneNumber' });
         }
 
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        const newPressing = new pressing({
+        const newPressing = new Pressing({
             name,
-            lat,
-            long,
             phoneNumber,
             password: hashedPassword,
             address,
@@ -166,14 +185,16 @@ authController.registerPressing = async (req, res) => {
 
         await newPressing.save();
 
-        const newCoordinate = new coordinate({
+        const newCoordinate = new Coordinate({
             userId: newPressing.id,
-            category: "PRESSING"
+            category: "PRESSING",
+            lat,
+            long,
         })
 
         await newCoordinate.save()
 
-        res.status(201).json(newPressing);
+        res.status(200).json({message: 'Pressing account created succesfully'})
 
     } catch (err) {
         console.log(err);
@@ -190,25 +211,30 @@ authController.registerPressing = async (req, res) => {
  */
 authController.loginPressing = async (req, res) => {
     try {
-        if (req.session.user) {
-            return res.status(200).json({ message: 'Pressing already authenticated' });
-        }
+
         const { phoneNumber, password } = req.body;
 
-        // check if pressing exists by email
-        const existingPressing = await pressing.findOne({ where: { phoneNumber: phoneNumber } });
+        const existingPressing = await Pressing.findOne({ where: { phoneNumber: phoneNumber } });
+
         if (!existingPressing) {
-            return res.status(400).json({ message: 'Vérifier vos informations' });
+            return res.status(400).json({ message: 'Incorrect information' });
         }
 
         const match = await bcrypt.compare(password, existingPressing.password);
         if (!match) {
-            return res.status(400).json({ message: 'Vérifiez vos informations' });
+            return res.status(400).json({ message: 'Incorrect information' });
         }
 
         const { password: pressingPassword, id: pressingId, ...pressingWithoutPassword } = existingPressing.dataValues;
 
-        req.session.user = pressingId;
+        req.session.regenerate(function (err) {
+            if (err) {
+                return res.status(500).json({ message: err });
+            }
+            req.session.user = pressingWithoutPassword;
+            req.session.user.id = pressingId
+            return res.status(200).json(pressingWithoutPassword);
+        });
 
         res.status(200).json(pressingWithoutPassword);
 
@@ -237,6 +263,4 @@ authController.logoutPressing = async (req, res) => {
     }
 }
 
-
-
-module.exports = authController
+module.exports = authController;

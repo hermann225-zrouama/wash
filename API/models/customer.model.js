@@ -5,7 +5,7 @@ const { sq } = require('../db/init.db');
 // creation de model pour la localisation
 
 
-const client = sq.define('client', {
+const customer = sq.define('customer', {
     firstName: {
         type: DataTypes.STRING,
         allowNull: true
@@ -33,6 +33,6 @@ const client = sq.define('client', {
     }
 }, {freezeTableName: true});
 
-client.sync({alter: true});
+customer.sync({alter: true});
 
-module.exports = client;
+module.exports = customer;

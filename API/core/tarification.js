@@ -1,11 +1,10 @@
-let clothesCategoryBindingPrices = {
-    "TSHIRT": 0,
+const clothesCategoryBindingPrices = {
+    "TSHIRT": 100,
     "PANTALON": 100,
-    "CHEMISE": 200,
-    "VESTE": 0,
-    "DRAP": 0
+    "CHEMISE": 100,
+    "VESTE": 100,
+    "DRAP": 100
 }
-
 
 const tarification = (clothesRequestItems)=>{
     let total = 0;
